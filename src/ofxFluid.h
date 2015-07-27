@@ -73,7 +73,11 @@ public:
     void    addVelocity(ofBaseHasTexture &_tex, float _pct = 1.0);
     void    addTemporalForce(ofPoint _pos, ofPoint _dir, ofFloatColor _col, float _rad = 1.0f, float _temp = 10.f, float _den = 1.f );
     void    addConstantForce(ofPoint _pos, ofPoint _dir, ofFloatColor _col, float _rad = 1.0f, float _temp = 10.f, float _den = 1.f );
-    
+
+	int getNumConstantForces();
+	void removeConstantForceAtIndex(int i);
+	void clearConstantForces();
+
     virtual ofTexture & getTexture() {
         return pingPong.src->getTextureReference();
     };
@@ -91,7 +95,13 @@ public:
     float   velocityDissipation;
     float   temperatureDissipation;
     float   pressureDissipation;
-    
+
+	float   smokeBuoyancy;
+	float   smokeWeight;
+	int     numJacobiIterations;
+	float   timeStep;
+
+
 private:
     void    advect(ofxSwapBuffer& _buffer, float _dissipation);
     void    jacobi();
@@ -120,22 +130,18 @@ private:
     vector<punctualForce> temporalForces;
     ofPoint gForce;
     
-    float   smokeBuoyancy;
-    float   smokeWeight;
-    float   gradientScale;
+
+	float   gradientScale;
     float   ambientTemperature;
     
     float   gridWidth,gridHeight;
-    float   timeStep;
     float   cellSize;
     float   scale;
     
-    int     numJacobiIterations;
     bool    bObstacles;
     
     ofFbo   colorAddFbo, velocityAddFbo;
     float   colorAddPct, velocityAddPct;
-    
-    int     colorGlFormat;
+
 };
 #endif
