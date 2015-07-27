@@ -33,5 +33,4 @@ public:
 	float radius;
 	float temperature;
 	float density;
-	float spread;
 };

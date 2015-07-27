@@ -44,7 +44,6 @@ void testApp::setup(){
 	RUI_SHARE_PARAM(radius, 0, 20);
 	RUI_SHARE_PARAM(temperature, -50, 50);
 	RUI_SHARE_PARAM(density, 0, 1);
-	RUI_SHARE_PARAM(spread, 0, 90);
 
 
 	RUI_LOAD_FROM_XML();
