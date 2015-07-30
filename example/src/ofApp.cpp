@@ -9,9 +9,10 @@ void testApp::setup(){
 	width = 1200;
 	height = 600;
 
+	float scale = 0.5;
 	// Initial Allocation
 	//
-	fluid.allocate(width, height, 0.5);
+	fluid.allocate(width, height, scale);
 
 	// Seting the gravity set up & injecting the background image
 	//
@@ -45,9 +46,7 @@ void testApp::setup(){
 	RUI_SHARE_PARAM(temperature, -50, 50);
 	RUI_SHARE_PARAM(density, 0, 1);
 
-
 	RUI_LOAD_FROM_XML();
-
 
 	float v = 1.2;
 	// Adding constant forces
@@ -61,6 +60,12 @@ void testApp::setup(){
 	}
 
 
+	fboReader = new ofxFastFboReader(4);
+	fboReader->setAsync(true);
+
+	//float fboScaledown = 1;
+	//smallerVelFbo.allocate(width * scale * fboScaledown, height * scale * fboScaledown, GL_RGB32F);
+
 	ofSetWindowShape(width, height);
 }
 
@@ -69,10 +74,15 @@ void testApp::update(){
 
 	//obstacles test
 	if(ofGetMousePressed(0)){
-		fluid.begin();
-		ofClear(0);
-		ofSetColor(255);
-		ofCircle(mouseX, mouseY, 30);
+		fluid.begin(0, false);
+			int wall = 5;
+			//ofClear(0);
+			ofSetColor(255);
+			ofRect(0,0, fluid.getWidth(), wall);
+			ofRect(0,fluid.getHeight() - wall, fluid.getWidth(), wall);
+			ofRect(0,0, wall, fluid.getHeight());
+			ofRect(fluid.getWidth() - wall,0, wall, fluid.getHeight());
+			ofCircle(mouseX, mouseY, 30);
 		fluid.end();
 	}
 
@@ -99,13 +109,75 @@ void testApp::update(){
 	//	Update
 	//
 	fluid.update();
+
 }
 
 //--------------------------------------------------------------
 void testApp::draw(){
+
+	ofFloatImage velImg;
+	ofFloatPixels velBuffer;
+
 	ofBackgroundGradient(ofColor::gray, ofColor::black, OF_GRADIENT_LINEAR);
 
 	fluid.draw();
+	fluid.getObstaclesFbo().draw(0,0,100,100);
+
+//	smallerVelFbo.begin();
+//	fluid.getVelocityBuffer().draw(0,0, smallerVelFbo.getWidth(), smallerVelFbo.getHeight());
+//	smallerVelFbo.end();
+
+	TS_START("getVelBufferPBO");
+	fboReader->readToFloatPixels(fluid.getVelocityBuffer(), velBuffer);
+	TS_STOP("getVelBufferPBO");
+
+	TS_START("setFromPix");
+	velImg.setFromPixels(velBuffer);
+	velImg.draw(200, 0,100,100);
+	TS_STOP("setFromPix");
+
+//	int x = ofMap(mouseX, 0, ofGetWidth(), 0, 599, true);
+//	int y = ofMap(mouseY, 0, ofGetHeight(), 0, 299, true);
+//
+//	float xx = velImg.getPixelsRef()[y * 600 * 3 + x * 3]; 		//R
+//	float yy = velImg.getPixelsRef()[y * 600 * 3 + x * 3 + 1];	//G
+//	float zz = velImg.getPixelsRef()[y * 600 * 3 + x * 3 + 2];	//G
+//	cout << xx << ", " << yy << ", " << zz << endl;
+
+	TS_START("drawVectorMesh");
+	ofMesh lines;
+	lines.setMode(OF_PRIMITIVE_LINES);
+	for(int i = 0; i < 600; i += 10){
+		for(int j = 0; j < 300; j += 10){
+			float xx = 5 * velBuffer.getData()[j * 600 * 3 + i * 3]; 		//R
+			float yy = 5 * velBuffer.getData()[j * 600 * 3 + i * 3 + 1];	//G
+			lines.addVertex(ofVec2f(i,j));
+			lines.addVertex(ofVec2f(i + xx, j + yy));
+			lines.addColor(ofColor::white);
+			lines.addColor(ofColor::black);
+		}
+	}
+	ofPushMatrix();
+	ofScale(2,2,2);
+	lines.draw();
+	ofPopMatrix();
+	TS_STOP("drawVectorMesh");
+
+
+
+	TS_START("saveToHDR");
+	velImg.save("a.HDR");
+	TS_STOP("saveToHDR");
+
+
+
+//	TS_START("getVelBuffer");
+//	//fluid.getVelocityBuffer(velBuffer);
+//	fluid.getVelocityBuffer().readToPixels(velBuffer);
+//	velImg.setFromPixels(velBuffer);
+//	velImg.draw(100, 0,100,100);
+//	TS_STOP("getVelBuffer");
+
 }
 
 //--------------------------------------------------------------

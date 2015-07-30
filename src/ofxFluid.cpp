@@ -202,7 +202,7 @@ ofxFluid::ofxFluid(){
                                                       if (isVel!=0){
                                                           newFrame -=0.5;
                                                           newFrame *=2.0;
-                                                          newFrame.b = 0.5;
+                                                          newFrame.b = 0.0;
                                                       }
                                                     
                                                       gl_FragColor = prevFrame+newFrame*pct;//mix(prevFrame,newFrame,pct);
@@ -327,6 +327,10 @@ void ofxFluid::setUseObstacles(bool _do){
         ofClear(0,0);
         obstaclesFbo.end();
     }
+}
+
+void ofxFluid::getVelocityBuffer(ofFloatPixels & pixels){
+	velocityBuffer[1].readToPixels(pixels);
 }
 
 void ofxFluid::addTemporalForce(ofPoint _pos, ofPoint _vel, ofFloatColor _col, float _rad, float _temp, float _den){

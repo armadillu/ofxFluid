@@ -4,6 +4,7 @@
 #include "ofxFluid.h"
 #include "ofxTimeMeasurements.h"
 #include "ofxRemoteUIServer.h"
+#include "ofxFastFboReader.h"
 
 class testApp : public ofBaseApp{
 public:
@@ -33,4 +34,7 @@ public:
 	float radius;
 	float temperature;
 	float density;
+
+	ofxFastFboReader  * fboReader;
+	//ofFbo smallerVelFbo;
 };
