@@ -74,8 +74,10 @@ public:
     void    addTemporalForce(ofPoint _pos, ofPoint _dir, ofFloatColor _col, float _rad = 1.0f, float _temp = 10.f, float _den = 1.f );
     void    addConstantForce(ofPoint _pos, ofPoint _dir, ofFloatColor _col, float _rad = 1.0f, float _temp = 10.f, float _den = 1.f );
 
-	ofFbo&   getObstaclesFbo(){return obstaclesFbo;};
-	ofFbo& getVelocityBuffer(){return velocityBuffer.getDstFbo();}
+	ofFbo&  getObstaclesFbo(){return obstaclesFbo;};
+	ofFbo& 	getVelocityBuffer(){return velocityBuffer.getSrcFbo();}
+	ofFbo& 	getColorBuffer(){return pingPong.getSrcFbo();}
+
 	void getVelocityBuffer(ofFloatPixels & pixels);
 	int getNumConstantForces();
 	void removeConstantForceAtIndex(int i);
