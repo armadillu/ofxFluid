@@ -35,6 +35,10 @@ public:
 	float temperature;
 	float density;
 
+	float colorMapRange;
+	bool drawVelField;
+
+	
 	ofxFastFboReader  * fboReader;
 	//ofFbo smallerVelFbo;
 };

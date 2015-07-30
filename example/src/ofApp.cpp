@@ -4,8 +4,9 @@
 void testApp::setup(){
 	ofEnableAlphaBlending();
 	ofSetCircleResolution(100);
+	ofSetFrameRate(60);
 
-	TIME_SAMPLE_SET_FRAMERATE(60.0);
+	TIME_SAMPLE_SET_FRAMERATE(ofGetTargetFrameRate());
 	width = 1200;
 	height = 600;
 
@@ -20,7 +21,7 @@ void testApp::setup(){
 	fluid.velocityDissipation = 0.99;
 
 	fluid.setGravity(ofVec2f(0.0,0.0));
-	fluid.setGravity(ofVec2f(0.0,-0.00098));
+	//fluid.setGravity(ofVec2f(0.0,-0.00098));
 
 	//	Set obstacle
 	//
@@ -46,16 +47,24 @@ void testApp::setup(){
 	RUI_SHARE_PARAM(temperature, -50, 50);
 	RUI_SHARE_PARAM(density, 0, 1);
 
+	RUI_NEW_GROUP("vel field");
+	RUI_SHARE_PARAM(colorMapRange, 0, 100);
+	RUI_SHARE_PARAM(drawVelField);
+
 	RUI_LOAD_FROM_XML();
 
-	float v = 1.2;
+	float v = 1.6;
 	// Adding constant forces
 	//
 	for(int i = 0; i < 10; i++){
+		ofVec2f veld = ofVec2f(vel, 0);
+		veld.rotate( - 45 + i * 9);
 		fluid.addConstantForce(ofPoint(width*0.1, 0.05 * height + i * height * 0.1), //pos
-							   ofPoint(v,0), //vel
+							   veld, //vel
 							   ofFloatColor(0.5,0.1,0.0), //color
-							   3.f //rad
+							   4.f, //rad
+							   10, //temp
+							   1.0 //density
 							   );
 	}
 
@@ -121,7 +130,9 @@ void testApp::draw(){
 	ofBackgroundGradient(ofColor::gray, ofColor::black, OF_GRADIENT_LINEAR);
 
 	fluid.draw();
-	fluid.getObstaclesFbo().draw(0,0,100,100);
+	ofEnableBlendMode(OF_BLENDMODE_ADD);
+	fluid.getObstaclesFbo().draw(0,0,ofGetWidth(),ofGetHeight());;
+	ofEnableBlendMode(OF_BLENDMODE_ALPHA);
 
 //	smallerVelFbo.begin();
 //	fluid.getVelocityBuffer().draw(0,0, smallerVelFbo.getWidth(), smallerVelFbo.getHeight());
@@ -131,10 +142,10 @@ void testApp::draw(){
 	fboReader->readToFloatPixels(fluid.getVelocityBuffer(), velBuffer);
 	TS_STOP("getVelBufferPBO");
 
-	TS_START("setFromPix");
-	velImg.setFromPixels(velBuffer);
-	velImg.draw(200, 0,100,100);
-	TS_STOP("setFromPix");
+//	TS_START("setFromPix");
+//	velImg.setFromPixels(velBuffer);
+//	velImg.draw(200, 0,100,100);
+//	TS_STOP("setFromPix");
 
 //	int x = ofMap(mouseX, 0, ofGetWidth(), 0, 599, true);
 //	int y = ofMap(mouseY, 0, ofGetHeight(), 0, 299, true);
@@ -144,30 +155,38 @@ void testApp::draw(){
 //	float zz = velImg.getPixelsRef()[y * 600 * 3 + x * 3 + 2];	//G
 //	cout << xx << ", " << yy << ", " << zz << endl;
 
-	TS_START("drawVectorMesh");
-	ofMesh lines;
-	lines.setMode(OF_PRIMITIVE_LINES);
-	for(int i = 0; i < 600; i += 10){
-		for(int j = 0; j < 300; j += 10){
-			float xx = 5 * velBuffer.getData()[j * 600 * 3 + i * 3]; 		//R
-			float yy = 5 * velBuffer.getData()[j * 600 * 3 + i * 3 + 1];	//G
-			lines.addVertex(ofVec2f(i,j));
-			lines.addVertex(ofVec2f(i + xx, j + yy));
-			lines.addColor(ofColor::white);
-			lines.addColor(ofColor::black);
+	if(drawVelField){
+		TS_START("drawVectorMesh");
+		ofMesh lines;
+		lines.setMode(OF_PRIMITIVE_LINES);
+		for(int i = 0; i < 600; i += 10){
+			for(int j = 0; j < 300; j += 10){
+				float xx = 5 * velBuffer.getData()[j * 600 * 3 + i * 3]; 		//R
+				float yy = 5 * velBuffer.getData()[j * 600 * 3 + i * 3 + 1];	//G
+				lines.addVertex(ofVec2f(i,j));
+				lines.addVertex(ofVec2f(i + xx, j + yy));
+				float len = sqrtf(xx * xx + yy * yy);
+				float colorPct = ofMap(len, 0, colorMapRange, 0, 1, true);
+				ofColor c;
+				c.setHsb( 255 * colorPct, 255, 255);
+				c.a = 255;
+				lines.addColor(c);
+				c.a = 0;
+				lines.addColor(c);
+			}
 		}
+		ofPushMatrix();
+		ofScale(2,2,2);
+		lines.draw();
+		ofPopMatrix();
+		TS_STOP("drawVectorMesh");
 	}
-	ofPushMatrix();
-	ofScale(2,2,2);
-	lines.draw();
-	ofPopMatrix();
-	TS_STOP("drawVectorMesh");
 
 
 
-	TS_START("saveToHDR");
-	velImg.save("a.HDR");
-	TS_STOP("saveToHDR");
+//	TS_START("saveToHDR");
+//	velImg.save("a.HDR");
+//	TS_STOP("saveToHDR");
 
 
 
