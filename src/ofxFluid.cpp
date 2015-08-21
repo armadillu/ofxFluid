@@ -113,18 +113,14 @@ ofxFluid::ofxFluid(){
     string fragmentSubtractGradientShader = STRINGIFY(uniform sampler2DRect Velocity;
                                                       uniform sampler2DRect Pressure;
                                                       uniform sampler2DRect tex0;
-                                                      
                                                       uniform float GradientScale;
                                                       
                                                       void main(){
                                                           vec2 st = gl_TexCoord[0].st;
                                                           
                                                           vec3 oC = texture2DRect(tex0, st ).rgb;
-                                                          if (oC.x > 0.1) {
-                                                              gl_FragColor.gb = oC.yz;
-                                                              return;
-                                                          }
-                                                          
+														  vec2 oldV = texture2DRect(Velocity, st).rg;
+
                                                           float pN = texture2DRect(Pressure, st + vec2(0.0, 1.0)).r;
                                                           float pS = texture2DRect(Pressure, st + vec2(0.0, -1.0)).r;
                                                           float pE = texture2DRect(Pressure, st + vec2(1.0, 0.0)).r;
@@ -135,16 +131,30 @@ ofxFluid::ofxFluid(){
                                                           vec3 oS = texture2DRect(tex0, st + vec2(0.0, -1.0)).rgb;
                                                           vec3 oE = texture2DRect(tex0, st + vec2(1.0, 0.0)).rgb;
                                                           vec3 oW = texture2DRect(tex0, st + vec2(-1.0, 0.0)).rgb;
-                                                          
+
+														  if (oC.x > 0.1) {
+															  //gl_FragColor.gb = oC.yz;
+															  //gl_FragColor = vec3(0.0);
+															  vec4 reject = vec4(0.0);
+															  if (oN.x > 0.1) { reject.y += -5.0; }\
+															  if (oS.x > 0.1) { reject.y += 5.0; }\
+															  if (oE.x > 0.1) { reject.x += -6.0; }\
+															  if (oW.x > 0.1) { reject.x += 6.0; }\
+
+															  gl_FragColor = reject;
+															  //gl_FragColor.rg = vec2(-(st.x - 256.) / 512.0, -(st.y - 256.) / 512.0 );
+															  return;
+														  }
+
                                                           vec2 obstV = vec2(0.0,0.0);
                                                           vec2 vMask = vec2(1.0,1.0);
                                                           
-                                                          if (oN.x > 0.1) { pN = pC; obstV.y = oN.z; vMask.y = 0.0; }\
-                                                          if (oS.x > 0.1) { pS = pC; obstV.y = oS.z; vMask.y = 0.0; }\
-                                                          if (oE.x > 0.1) { pE = pC; obstV.x = oE.y; vMask.x = 0.0; }\
-                                                          if (oW.x > 0.1) { pW = pC; obstV.x = oW.y; vMask.x = 0.0; }\
+                                                          if (oN.x > 0.1) { pN = pC; obstV.y = oN.r; vMask.y = 0.0; }\
+                                                          if (oS.x > 0.1) { pS = pC; obstV.y = oS.r; vMask.y = 0.0; }\
+                                                          if (oE.x > 0.1) { pE = pC; obstV.x = oE.r; vMask.x = 0.0; }\
+                                                          if (oW.x > 0.1) { pW = pC; obstV.x = oW.r; vMask.x = 0.0; }\
                                                           
-                                                          vec2 oldV = texture2DRect(Velocity, st).rg;
+
                                                           vec2 grad = vec2(pE - pW, pN - pS) * GradientScale;
                                                           vec2 newV = oldV - grad;
                                                           
@@ -266,7 +276,7 @@ ofxFluid::ofxFluid(){
     applyBuoyancyShader.setupShaderFromSource(GL_FRAGMENT_SHADER, fragmentApplyBuoyancyShader);
     applyBuoyancyShader.linkProgram();
     
-    cellSize            = 1.25f; 
+    cellSize            = 1.25f;
     gradientScale       = 1.00f / cellSize;
     ambientTemperature  = 0.0f;
     numJacobiIterations = 10;
@@ -283,10 +293,14 @@ void ofxFluid::allocate(int _width, int _height, float _scale, bool _HD){
     width = _width; 
     height = _height; 
     scale = _scale;
+
+	gridWidth = width * scale;
+	gridHeight = height * scale;
+
+	ofLogNotice("ofxFluid") << "Allocating ofxFluid of size " << gridWidth << " x " << gridHeight << "(scale = "
+	<< scale << ")" <<  endl;
     
-    gridWidth = width * scale;
-    gridHeight = height * scale;
-    
+
     pingPong.allocate(gridWidth,gridHeight,(_HD)?GL_RGBA32F:GL_RGBA);
     dissipation = 0.999f;
     velocityBuffer.allocate(gridWidth,gridHeight,GL_RGB32F);
@@ -297,7 +311,7 @@ void ofxFluid::allocate(int _width, int _height, float _scale, bool _HD){
     pressureDissipation = 0.9f;
     
     initFbo(obstaclesFbo, gridWidth, gridHeight, GL_RGBA);
-    initFbo(divergenceFbo, gridWidth, gridHeight, GL_RGB16F);
+    initFbo(divergenceFbo, gridWidth, gridHeight, GL_RGB32F);
     
     compileCode();
     
@@ -337,7 +351,7 @@ void ofxFluid::addTemporalForce(ofPoint _pos, ofPoint _vel, ofFloatColor _col, f
     punctualForce f;
     
     f.pos = _pos * scale;
-    f.vel = _vel;
+    f.vel = _vel * scale;
     f.color.set(_col.r,_col.g,_col.b);
     f.rad = _rad;
     f.temp = _temp;
@@ -350,7 +364,7 @@ void ofxFluid::addConstantForce(ofPoint _pos, ofPoint _vel, ofFloatColor _col, f
     punctualForce f;
     
     f.pos = _pos * scale;
-    f.vel = _vel;
+    f.vel = _vel * scale;
     f.color.set(_col.r,_col.g,_col.b);
     f.rad = _rad;
     f.temp = _temp;
