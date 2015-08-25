@@ -487,8 +487,8 @@ void ofxFluid::update(){
     applyBuoyancy();
     velocityBuffer.swap();
     
-    ofEnableBlendMode(OF_BLENDMODE_ALPHA);
-    ofDisableBlendMode();
+    //ofEnableBlendMode(OF_BLENDMODE_ALPHA);
+    //ofDisableBlendMode();
     //  Update temperature, Color (PingPong) and Velocity buffers
     //
     if(colorAddPct>0.0||velocityAddPct>0.0){
@@ -513,8 +513,8 @@ void ofxFluid::update(){
     }
     
     if ( temporalForces.size() != 0){
-        ofEnableBlendMode(OF_BLENDMODE_ADD);
-        ofDisableBlendMode();
+        //ofEnableBlendMode(OF_BLENDMODE_ADD);
+        //ofDisableBlendMode();
         
         for(int i = 0; i < temporalForces.size(); i++){
             applyImpulse(temperatureBuffer, temporalForces[i].pos, ofVec3f(temporalForces[i].temp,temporalForces[i].temp,temporalForces[i].temp), temporalForces[i].rad);
@@ -527,8 +527,8 @@ void ofxFluid::update(){
     }
     
     if ( constantForces.size() != 0){
-        ofEnableBlendMode(OF_BLENDMODE_ADD);
-        ofDisableBlendMode();
+        //ofEnableBlendMode(OF_BLENDMODE_ADD);
+        //ofDisableBlendMode();
         for(int i = 0; i < constantForces.size(); i++){
             applyImpulse(temperatureBuffer, constantForces[i].pos, ofVec3f(constantForces[i].temp,constantForces[i].temp,constantForces[i].temp), constantForces[i].rad);
             if (constantForces[i].color.length() != 0)
