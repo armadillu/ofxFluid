@@ -557,18 +557,13 @@ void ofxFluid::update(){
 void ofxFluid::draw(int x, int y, float _width, float _height){
     if (_width == -1) _width = width;
     if (_height == -1) _height = height;
-    
-    ofPushStyle();
-    ofSetColor(255);
-    
+
 //    ofEnableAlphaBlending();
 //    if(bObstacles){
 //        textures[0].draw(x,y,_width,_height);
 //    }
     
     pingPong.src->draw(x,y,_width,_height);
-
-    ofPopStyle();
 }
 
 void ofxFluid::drawVelocity(int x, int y, float _width, float _height){
